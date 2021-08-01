@@ -23,9 +23,11 @@ class ManualPlayer:
     def eval_result(self, result):
         print(result) 
 
+
 class InputError(Exception):
     def __init__(self, message):
         print(message) 
+
 
 class Game:
     def __init__(self, rows, columns, options):
@@ -33,11 +35,21 @@ class Game:
         self.trys = 0
         self.code = list()
         self.options = options
-        self.mp = [ 0 for x in range(options) ] 
+        self.mp = [0 for _ in range(options)]
         for i in range(columns):
             self.code.append(random.randint(0, options - 1))
             self.mp[self.code[-1]] += 1
-            
+
+    def set_code(self, code):
+            if len(code) != len(self.code):
+                return
+            self.code = [int(x) for x in code]
+            for i, _ in enumerate(self.mp):
+                self.mp[i] = 0
+            for i, _ in enumerate(self.code):
+                self.mp[self.code[i]] += 1
+
+
     def restart(self):
         self.trys = 0
         for i, _ in enumerate(self.mp):
@@ -84,23 +96,27 @@ class Game:
                 self.restart()
                 return msg
         return result
-            
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--tries", type=int, default=10, help="sets the amount of tries you have. Default 10")
     parser.add_argument("-l", "--lenght", type=int, default=5, help="sets the length of the code to guess. Default 5")
     parser.add_argument("-o", "--options", type=int, default=8, help="sets the amount of numbers that can appear in the code. Default 8") 
     parser.add_argument("-s", "--solver", type=str, default="ManualPlayer", help="sets the solver for the game. Defaults to manual player.") 
-    parser.add_argument("-m", "--module", type=str, default=None, help="specifies the module for your autosolver. If not specified its assumed that your autosolver is called like it's module.") 
+    parser.add_argument("-m", "--module", type=str, default=None, help="specifies the module for your autosolver. If not specified its assumed that your autosolver is called like it's module.")
+    parser.add_argument("-c", "--code", nargs="+", type=int, default=None, help="Sets the code for the game")
     args = parser.parse_args()
     if args.solver != "ManualPlayer":
-        if args.module != None:
+        if args.module is None:
             globals().update(importlib.import_module(args.solver).__dict__)
         else:
             globals().update(importlib.import_module(args.module).__dict__) 
     mastermind = Game(args.tries, args.lenght, args.options)
+    if args.code is not None:
+        mastermind.set_code(args.code)
     player = globals()[args.solver](mastermind) 
-    # print(mastermind.code)
+    print(mastermind.code)
     while True:
         guess = player.get_guess()
         if player.done():
