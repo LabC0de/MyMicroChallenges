@@ -6,6 +6,7 @@ import random
 import argparse
 import importlib
 
+
 class ManualPlayer:
     def __init__(self, game):
         print("Playing a game of mastermind.\nCode length is {}.\nOptions are the numbers 0-{}.\nYou have {} guesses.\nGood Luck!".format(len(game.code), game.options - 1, game.rows)) 
@@ -33,8 +34,10 @@ class Game:
     def __init__(self, rows, columns, options):
         self.rows = rows
         self.trys = 0
+        self.last_tries = 0
         self.code = list()
         self.options = options
+        self.won = False
         self.mp = [0 for _ in range(options)]
         for i in range(columns):
             self.code.append(random.randint(0, options - 1))
@@ -49,15 +52,18 @@ class Game:
             for i, _ in enumerate(self.code):
                 self.mp[self.code[i]] += 1
 
-
     def restart(self):
+        self.last_tries = self.trys
         self.trys = 0
         for i, _ in enumerate(self.mp):
             self.mp[i] = 0
         for i, _ in enumerate(self.code):
             self.code[i] = random.randint(0, self.options - 1)
             self.mp[self.code[i]] += 1
-    
+
+    def get_last_score(self):
+        return self.won, self.last_tries, self.options, len(self.code)
+
     def do_input(self, ip):
         if len(ip) != len(self.code):
             raise InputError("Input of wrong length") 
@@ -72,6 +78,7 @@ class Game:
         
     def do_turn(self, guess):
         result = ""
+        self.trys += 1
         tmp = [0 for x in range(self.options)]
         for i, x in enumerate(guess):
             tmp[x] += 1
@@ -86,12 +93,13 @@ class Game:
         for i in range(ctr - len(result)):
             result += "o"
         if result == "x" * len(self.code):
+            self.won = True
             msg = "You won after {} turns".format(self.trys)
             self.restart()
             return msg
         if self.rows != 0:
-            self.trys += 1
             if self.rows <= self.trys:
+                self.won = False
                 msg = "You lost after {} turns. The code was {}".format(self.rows, self.code)
                 self.restart()
                 return msg

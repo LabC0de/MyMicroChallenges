@@ -2,7 +2,7 @@ import random
 
 
 class SampleSolver:
-    def __init__(self, game):
+    def __init__(self, game, benchmark=False):
         self.length = len(game.code)
         self.options = game.options
         self.is_done = False
